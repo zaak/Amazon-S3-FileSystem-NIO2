@@ -402,12 +402,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
         LOGGER.debug("New byte channel. path:{}, options:{}", path, options);
 
         final S3Path s3Path = toS3Path(path);
-        final boolean multipartEnabled = isMultipartUploadEnabled(s3Path);
+        final boolean multipartEnabled = isMultipartUploadCapable(s3Path, options);
 
-        // if READ or APPEND use SeekableByteChannel
-        if (options.contains(StandardOpenOption.READ) ||
-            options.contains(StandardOpenOption.APPEND) ||
-            ! multipartEnabled) {
+        if (!multipartEnabled) {
 
             LOGGER.debug("Using S3SeekableByteChannel");
 
@@ -427,12 +424,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
         LOGGER.debug("New file channel. path:{}, filter:{}", path, options);
 
         final S3Path s3Path = toS3Path(path);
-        final boolean multipartEnabled = isMultipartUploadEnabled(s3Path);
+        final boolean multipartEnabled = isMultipartUploadCapable(s3Path, options);
 
-        // if READ or APPEND use S3FileChannel
-        if (options.contains(StandardOpenOption.READ) ||
-            options.contains(StandardOpenOption.APPEND) ||
-            ! multipartEnabled) {
+        if (!multipartEnabled) {
 
             LOGGER.debug("Using S3FileChannel");
 
@@ -738,7 +732,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
         this.cache = cache;
     }
 
-    private boolean isMultipartUploadEnabled(final S3Path s3Path) {
+    private boolean isMultipartUploadCapable(final S3Path s3Path, final Set<? extends OpenOption> options) {
+        // Not supported options
+        if (options.contains(StandardOpenOption.READ) || options.contains(StandardOpenOption.APPEND)) {
+            return false;
+        }
+
         final S3FileSystem fileSystem = s3Path.getFileSystem();
         final Properties properties = fileSystem.getProperties();
 
