@@ -52,7 +52,6 @@ public class S3UtilsTest extends S3UnitTestBase {
         assertEquals(19, file1ObjectSummary.getSize());
     }
 
-
     @Test(expected = NoSuchFileException.class)
     public void getS3ObjectSummary404() throws IOException {
         S3Path root = fileSystem.getPath("/bucket");

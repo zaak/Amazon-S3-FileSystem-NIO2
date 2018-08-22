@@ -11,7 +11,6 @@ import com.upplication.s3fs.attribute.S3UserPrincipal;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,28 +87,30 @@ public class S3Utils {
      * @return S3PosixFileAttributes never null
      * @throws NoSuchFileException if the Path doesnt exists
      */
-    public S3PosixFileAttributes getS3PosixFileAttributes(S3Path s3Path) throws NoSuchFileException {
-        S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+    public S3PosixFileAttributes getS3PosixFileAttributes(final S3Path s3Path) throws NoSuchFileException {
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
+        final S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+        final S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
+        final AmazonS3 client = s3Path.getFileSystem().getClient();
+        final AccessControlList acl = (!attrs.isDirectory())
+            ? client.getObjectAcl(bucketName, key)
+            : client.getBucketAcl(bucketName);
 
-        String key = s3Path.getKey();
-        String bucketName = s3Path.getFileStore().name();
+        final Owner owner = acl.getOwner();
+        final Set<PosixFilePermission> permissions = toPosixFilePermissions(acl.getGrantsAsList());
+        final S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
 
-        S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
-
-        AccessControlList acl;
-        AmazonS3 client = s3Path.getFileSystem().getClient();
-        if (!attrs.isDirectory()) {
-            acl = client.getObjectAcl(bucketName, key);
-        } else {
-            acl = client.getBucketAcl(bucketName);
-
-        }
-        Owner owner = acl.getOwner();
-        S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
-        Set<PosixFilePermission> permissions = toPosixFilePermissions(acl.getGrantsAsList());
-
-        return new S3PosixFileAttributes((String)attrs.fileKey(), attrs.lastModifiedTime(),
-                attrs.size(), attrs.isDirectory(), attrs.isRegularFile(), userPrincipal, null, permissions);
+        return new S3PosixFileAttributes(
+            (String) attrs.fileKey(),
+            attrs.lastModifiedTime(),
+            attrs.size(),
+            attrs.isDirectory(),
+            attrs.isRegularFile(),
+            userPrincipal,
+            null,
+            permissions
+        );
     }
 
 
