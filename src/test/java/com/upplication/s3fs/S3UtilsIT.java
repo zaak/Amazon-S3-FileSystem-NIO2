@@ -3,9 +3,11 @@ package com.upplication.s3fs;
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import com.upplication.s3fs.util.S3Utils;
 import org.junit.Before;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import java.nio.file.attribute.PosixFilePermission;
 import org.junit.Test;
 
 
@@ -229,6 +232,10 @@ public class S3UtilsIT {
         assertNotNull(result.owner());
         assertNull(result.group());
         assertNotNull(result.permissions());
+
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_WRITE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_READ));
     }
 
     @Test
@@ -254,9 +261,13 @@ public class S3UtilsIT {
         assertNotNull(result.lastModifiedTime());
         assertNotNull(result.size());
         // posix
-        assertNull(result.owner());
+        assertNotNull(result.owner());
         assertNull(result.group());
-        assertNull(result.permissions());
+        assertNotNull(result.permissions());
+
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_WRITE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_READ));
     }
 
     @Test
@@ -285,9 +296,13 @@ public class S3UtilsIT {
         assertNotNull(result.lastModifiedTime());
         assertNotNull(result.size());
         // posix
-        assertNull(result.owner());
+        assertNotNull(result.owner());
         assertNull(result.group());
-        assertNull(result.permissions());
+        assertNotNull(result.permissions());
+
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_WRITE));
+        assertTrue(result.permissions().contains(PosixFilePermission.OWNER_READ));
     }
 
     public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {

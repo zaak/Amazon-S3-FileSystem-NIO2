@@ -87,27 +87,30 @@ public class S3Utils {
      * @return S3PosixFileAttributes never null
      * @throws NoSuchFileException if the Path doesnt exists
      */
-    public S3PosixFileAttributes getS3PosixFileAttributes(S3Path s3Path) throws NoSuchFileException {
-        S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+    public S3PosixFileAttributes getS3PosixFileAttributes(final S3Path s3Path) throws NoSuchFileException {
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
+        final S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+        final S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
+        final AmazonS3 client = s3Path.getFileSystem().getClient();
+        final AccessControlList acl = (!attrs.isDirectory())
+            ? client.getObjectAcl(bucketName, key)
+            : client.getBucketAcl(bucketName);
 
-        String key = s3Path.getKey();
-        String bucketName = s3Path.getFileStore().name();
+        final Owner owner = acl.getOwner();
+        final Set<PosixFilePermission> permissions = toPosixFilePermissions(acl.getGrantsAsList());
+        final S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
 
-        S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
-        S3UserPrincipal userPrincipal = null;
-        Set<PosixFilePermission> permissions = null;
-
-        if (!attrs.isDirectory()) {
-            AmazonS3 client = s3Path.getFileSystem().getClient();
-            AccessControlList acl = client.getObjectAcl(bucketName, key);
-            Owner owner = acl.getOwner();
-
-            userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
-            permissions = toPosixFilePermissions(acl.getGrantsAsList());
-        }
-
-        return new S3PosixFileAttributes((String)attrs.fileKey(), attrs.lastModifiedTime(),
-                attrs.size(), attrs.isDirectory(), attrs.isRegularFile(), userPrincipal, null, permissions);
+        return new S3PosixFileAttributes(
+            (String) attrs.fileKey(),
+            attrs.lastModifiedTime(),
+            attrs.size(),
+            attrs.isDirectory(),
+            attrs.isRegularFile(),
+            userPrincipal,
+            null,
+            permissions
+        );
     }
 
 
