@@ -37,7 +37,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
         this.client = client;
         this.endpoint = endpoint;
         this.properties = props;
-        this.cache = 60000; // 1 minute cache for the s3Path
+        this.cache = -1; // Make cache always valid
     }
 
     @Override

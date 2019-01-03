@@ -149,42 +149,6 @@ public class ReadAttributesTest extends S3UnitTestBase {
         assertEquals(fileAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
     }
 
-    @Test
-    public void readAttributesRegenerateCacheWhenNotExists() throws IOException {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1", "".getBytes());
-
-        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
-        // create the cache
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
-        assertNotNull(((S3Path) file1).getFileAttributes());
-
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
-        assertNull(((S3Path) file1).getFileAttributes());
-
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
-        assertNotNull(((S3Path) file1).getFileAttributes());
-    }
-
-    @Test
-    public void readAttributesPosixRegenerateCacheWhenNotExists() throws IOException {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1", "".getBytes());
-
-        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
-        // create the cache
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
-        assertNotNull(((S3Path) file1).getFileAttributes());
-
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
-        assertNull(((S3Path) file1).getFileAttributes());
-
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
-        assertNotNull(((S3Path) file1).getFileAttributes());
-    }
-
     @Test(expected = NoSuchFileException.class)
     public void readAttributesFileNotExists() throws IOException {
         // fixtures

@@ -579,9 +579,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
         S3Path s3Path = toS3Path(path);
         if (type == BasicFileAttributes.class) {
             if (cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes())) {
-                A result = type.cast(s3Path.getFileAttributes());
-                s3Path.setFileAttributes(null);
-                return result;
+                return type.cast(s3Path.getFileAttributes());
             } else {
                 S3BasicFileAttributes attrs = s3Utils.getS3FileAttributes(s3Path);
                 s3Path.setFileAttributes(attrs);
@@ -590,9 +588,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
         } else if (type == PosixFileAttributes.class) {
             if (s3Path.getFileAttributes() instanceof PosixFileAttributes &&
                     cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes())) {
-                A result = type.cast(s3Path.getFileAttributes());
-                s3Path.setFileAttributes(null);
-                return result;
+                return type.cast(s3Path.getFileAttributes());
             }
 
             S3PosixFileAttributes attrs = s3Utils.getS3PosixFileAttributes(s3Path);
